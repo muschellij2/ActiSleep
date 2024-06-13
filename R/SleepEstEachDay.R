@@ -63,7 +63,7 @@
 #' NoPA_cut = 0.45,
 #' sleep_mins = 5,
 #' UseDiary = TRUE,
-#' diary_data = SleepDiary1Day,
+#' diary_data = SleepDiary1Day
 #' )
 #'
 SleepEstEachDay <- function(
@@ -87,6 +87,12 @@ SleepEstEachDay <- function(
 {
   # Convert dataset to data frame if it is not one already
   datain <- data.frame(datain)
+
+  # Format time variable
+  # dates <- ChangeTimeVar(datain, col_idx = 1, format = "%m/%d/%Y %H:%M")
+  dates <- ymd_hms(datain$date, tz = tz)
+  dates <- with_tz(dates, tzone = tz)
+  print(head(dates))
 
   # Throw error if dataset not successfully converted to data frame
   if(!is.data.frame(datain)) stop("Dataset is not a data frame")
@@ -146,14 +152,14 @@ SleepEstEachDay <- function(
 	N <- length(Y)
 
 	# Calculate the total number of segments based on S (segments/hour)
-	timelength <- difftime(datain$date[N], datain$date[1], units = "hours")
+	timelength <- difftime(dates[N], dates[1], units = "hours")
 	K <- as.numeric(round(timelength * S))
 
 	# Segment data depending on specified cost function
 	if(valid_accel_data)
 	  {
 		if(f == 1 | f == 3)
-		  {out <- Segmentor(data = Y, model = f, Kmax = K, compress = FALSE)}
+		  {print("Flag A"); out <- Segmentor(data = Y, model = f, Kmax = K, compress = FALSE); print("Flag B")}
 
 		if(f == 2)
 		  {
@@ -177,7 +183,7 @@ SleepEstEachDay <- function(
 		idx_end <- c(idx_start[-1], N)
 
 		sleep_seg <- SearchSleepSeg(
-		  datain$date,
+		  dates,
 		  Y,
 		  idx_start,
 		  idx_end,
@@ -209,7 +215,7 @@ SleepEstEachDay <- function(
 		    id = id,
 		    valid_accel = valid_accel_data,
 		    df = K,
-		    days = wday(datain$date[1], label = TRUE),
+		    days = wday(dates[1], label = TRUE),
 		    sleep_seg$dat_short[idx_sleep_overlap,],
 		    SI_bed = SI_i$bed,
 		    SI_wake = SI_i$wake,
@@ -222,7 +228,7 @@ SleepEstEachDay <- function(
 			  id = id,
 			  valid_accel = valid_accel_data,
 			  df = K,
-			  days = wday(datain$date[1], label = TRUE),
+			  days = wday(dates[1], label = TRUE),
 			  sleep_seg$dat_short[idx_sleep_nonoverlap,],
 			  SI_bed = SI_i$bed,
 			  SI_wake = SI_i$wake,
@@ -245,7 +251,7 @@ SleepEstEachDay <- function(
 			  id = id,
 			  valid_accel = valid_accel_data,
 			  df = K,
-			  days = wday(datain$date[1], label = TRUE),
+			  days = wday(dates[1], label = TRUE),
 			  tmp_sleep,
 			  SI_bed = SI_i$bed,
 			  SI_wake = SI_i$wake,
@@ -269,7 +275,7 @@ SleepEstEachDay <- function(
 		  id = id,
 		  valid_accel = valid_accel_data,
 		  df = NA,
-		  days = wday(datain$date[1], label=TRUE),
+		  days = wday(dates[1], label=TRUE),
 		  tmp_sleep,
 		  SI_bed = SI_i$bed,
 		  SI_wake = SI_i$wake,
@@ -283,6 +289,8 @@ SleepEstEachDay <- function(
 	sleep_tab$ts_start[idx] <- paste(sleep_tab$ts_start[idx], "00:00:00")
 	idx <- which(nchar(sleep_tab$ts_end) == 10)
 	sleep_tab$ts_end[idx] <- paste(sleep_tab$ts_end[idx], "00:00:00")
+
+	print(sleep_tab)
 
 	return(list(summary = sleep_tab))
 }
@@ -305,11 +313,12 @@ GetEstSleepInterval_subj <- function(
     wake = "8:00:00",
     tz = "GMT")
   {
-  if (is.null(datain$date)) {
+  date_formatted <- mdy_hm(datain$date)
+  if (is.null(date_formatted)) {
     print("ERROR: No column named date detected")
   }
   # Find child's diary info
-  date_names <- names(table(date(datain$date)))
+  date_names <- names(table(date_formatted))
   n_date <- length(date_names)
   bed_char <- paste(date_names[-n_date], bed)
   wake_char <- paste(date_names[-1], wake)
@@ -424,7 +433,7 @@ aggregate_dat <- function(
     tz = "GMT")
   {
   dat <- aggregate(
-    . ~ cut(datain$date, paste(cutnum, unit)),
+    . ~ cut(dates, paste(cutnum, unit)),
     datain[setdiff(names(datain), "date")],
     sum)
   names(dat)[1] = "date"

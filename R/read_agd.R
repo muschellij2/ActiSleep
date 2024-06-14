@@ -1,4 +1,3 @@
-
 #' @title Read in AGD filedata
 #'
 #' @description Obtain a list of AGD filenames and data

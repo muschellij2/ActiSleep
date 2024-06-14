@@ -102,7 +102,7 @@ S = 2,
 NoPA_cut = 0.45,
 sleep_mins = 5,
 UseDiary = TRUE,
-diary_data = SleepDiary1Day,
+diary_data = SleepDiary1Day
 )
 
 }

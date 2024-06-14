@@ -5,27 +5,27 @@
 \alias{AccelData}
 \title{Accelerometry Data}
 \format{
-a data frame with 1351 rows and 11 variables
+A data frame with 1351 rows and 11 variables.
 }
 \usage{
 data("AccelData")
 }
 \description{
 A dataset containing accelerometry data for a single subject in
-1-minute epochs, includes vector magnitude and other measurements
+1-minute epochs, includes vector magnitude and other measurements.
 
 \itemize{
-  \item date. time and date of single measurement
-  \item axis1. x-axis movement
-  \item axis2. y-axis movement
-  \item axis3. z-axis movement
-  \item steps. steps taken by subject
-  \item lux. amount of light present, measured in lux
-  \item inclineOff.
-  \item inclineStanding.
-  \item inclineSitting.
-  \item inclineLying.
-  \item VM. vector magnitude, calculated from x-, y-, z-axis measurements
+  \item date: Time and date of a single measurement.
+  \item axis1: X-axis movement.
+  \item axis2: Y-axis movement.
+  \item axis3: Z-axis movement.
+  \item steps: Steps taken by the subject.
+  \item lux: Amount of light present, measured in lux.
+  \item inclineOff: Incline off.
+  \item inclineStanding: Incline standing.
+  \item inclineSitting: Incline sitting.
+  \item inclineLying: Incline lying.
+  \item VM: Vector magnitude, calculated from x-, y-, and z-axis measurements.
 }
 }
 \keyword{datasets}

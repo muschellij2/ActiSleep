@@ -14,7 +14,7 @@ ChangeTimeVar(datain, col_idx, format = "\%Y-\%m-\%d \%H:\%M:\%S")
 \item{format}{format of input date data, default is YYYY-MM-DD HH:MM:SS}
 }
 \value{
-data frame with formatted time values
+dataframe with formatted time values
 }
 \description{
 Reformat the time variable to match analysis-ready format

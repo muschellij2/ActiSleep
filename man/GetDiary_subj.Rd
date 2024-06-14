@@ -18,7 +18,7 @@ GetDiary_subj(datain, subj_idx, idx_bed, idx_wake, tz = "GMT")
 \item{tz}{timezone, default is GMT}
 }
 \value{
-data frame with in-bed and out-bed times
+dataframe with in-bed and out-bed times
 }
 \description{
 Obtain table of in-bed and out-bed times from sleep diary data

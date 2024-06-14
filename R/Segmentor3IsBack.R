@@ -4,15 +4,8 @@
 #' as part of the Segmentor3IsBack package, which is no longer in CRAN. It has
 #' been imported into the ActiSleep package to ensure this package's longevity.
 #'
-#' @param data FILLER TEXT
-#' @param model number 1-5 indicating which distribution model to use
-#' @param Kmax FILLER TEXT
-#' @param phi FILLER TEXT
-#' @param m FILLER TEXT
-#' @param keep FILLER TEXT
-#' @param bounds FILLER TEXT
-#' @param compress FILLER TEXT
-
+#' @noRd
+#'
 Segmentor <- function(data = numeric(),
                      model = 1,
                      Kmax = 15,
@@ -22,6 +15,7 @@ Segmentor <- function(data = numeric(),
                      bounds = c(0,0),
                      compress = TRUE) UseMethod("Segmentor")
 
+#' @noRd
 Segmentor.default <- function(data = numeric(),
                              model = 1,
                              Kmax = 15,
@@ -203,7 +197,7 @@ Segmentor.default <- function(data = numeric(),
 
 ############################################################################################
 
-BestSegmentation <- function(x,K,t=numeric(),compress=TRUE)
+BestSegmentation <- function(x, K, t = numeric(), compress = TRUE)
 {
 	if (!is("Segmentor", class(x)))
 		stop("x must be an object of class Segmentor returned by the Segmentor function")
@@ -278,7 +272,7 @@ BestSegmentation <- function(x,K,t=numeric(),compress=TRUE)
 	bestCost.res
 }
 
-SelectModel <-function(x,penalty="oracle",seuil=n/log(n),keep=FALSE,greatjump=FALSE)
+SelectModel <-function(x, penalty = "oracle", seuil = n/log(n), keep = FALSE, greatjump = FALSE)
 {
 	if ((penalty!='BIC') & (penalty!='mBIC') & (penalty!='AIC') & (penalty!='oracle'))
 		stop("penalty must be BIC, mBIC, AIC or oracle")
@@ -427,8 +421,8 @@ SelectModel <-function(x,penalty="oracle",seuil=n/log(n),keep=FALSE,greatjump=FA
 }
 
 
-
-print.Segmentor <-function(x,...)
+#' @noRd
+print.Segmentor <- function(x,...)
 {
   cat("\n Model used for the segmentation: \n")
   print(getModel(x))

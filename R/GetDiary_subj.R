@@ -1,4 +1,3 @@
-
 #' @title Diary In/Out-bed Times
 #'
 #' @description Obtain table of in-bed and out-bed times from sleep diary data
@@ -9,7 +8,7 @@
 #' @param idx_wake array specifying indices for out-bed time data
 #' @param tz timezone, default is GMT
 #'
-#' @return data frame with in-bed and out-bed times
+#' @return dataframe with in-bed and out-bed times
 #' @export
 #'
 #' @examples

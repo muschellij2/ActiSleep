@@ -1,4 +1,3 @@
-
 #' @title Daily sleep estimate
 #'
 #' @description Obtain sleep data from accelerometer data
@@ -20,6 +19,8 @@
 #' @param CommonBedTime in-bed time if no diary data, default is "22:00:00"
 #' @param CommonWakeTime out-bed time if no diary data, default is "8:00:00"
 #' @param tz timezone, default is GMT
+#'
+#' @importFrom utils head
 #'
 #' @return list containing a data frame of summary sleep data
 #' @export

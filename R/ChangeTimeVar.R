@@ -1,4 +1,3 @@
-
 #' @title Reformat Time Variable
 #'
 #' @description Reformat the time variable to match analysis-ready format
@@ -7,7 +6,7 @@
 #' @param col_idx index of column to convert to date object
 #' @param format format of input date data, default is YYYY-MM-DD HH:MM:SS
 #'
-#' @return data frame with formatted time values
+#' @return dataframe with formatted time values
 #' @export
 #'
 #' @examples

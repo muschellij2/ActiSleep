@@ -1,1 +1,0 @@
-This document is intended to state that the role of CRAN maintainer for the ActiSleep package will be transferred to Nathan Szeto (nszeto@umich.edu) starting from version 0.2.2 onwards. The current maintainer, Dr. Margaret Banker (mbanker@umich.edu), has agreed to this change.

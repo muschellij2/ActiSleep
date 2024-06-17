@@ -5,8 +5,8 @@ Version: 0.2.2
 Date: 2024-06-14
 Authors@R: c(
     person("Jonggyu", "Baek", email = "Jonggyu.Baek@umassmed.edu", role = "aut"),
-    person("Margaret", "Banker", email = "margaret.banker@northwestern.edu", role = c("aut", "cre")),
-    person("Nathan", "Szeto", email = "nszeto@umich.edu", role = "aut"),
+    person("Margaret", "Banker", email = "margaret.banker@northwestern.edu", role = "aut"),
+    person("Nathan", "Szeto", email = "nszeto@umich.edu", role = c("aut", "cre")),
     person("Alice", "Cleynen", role = "aut"),
     person("Guillem", "Rigaill", role = "aut"),
     person("Michel", "Koskas", role = "aut"))

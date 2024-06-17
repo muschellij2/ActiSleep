@@ -2,7 +2,7 @@ Package: ActiSleep
 Type: Package
 Title: Sleep Duration Estimate Algorithm
 Version: 0.2.2
-Date: 2024-06-14
+Date: 2024-06-17
 Authors@R: c(
     person("Jonggyu", "Baek", email = "Jonggyu.Baek@umassmed.edu", role = "aut"),
     person("Margaret", "Banker", email = "margaret.banker@northwestern.edu", role = "aut"),

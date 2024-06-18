@@ -17,7 +17,7 @@ Description: Provides sleep duration estimates using a Pruned Dynamic
   Margaret, Jansen, Erica C., She, Xichen, Peterson, Karen E., Pitchford,
   E. Andrew, Song, Peter X. K. (2021) An Efficient Segmentation Algorithm to
   Estimate Sleep Duration from Actigraphy Data <doi:10.1007/s12561-021-09309-3>.
-License: file LICENSE
+License: GPL-3
 Imports: dplyr, stringr, lubridate, accelerometry, DBI, RSQLite, lazyeval,
           methods, utils, tibble
 Depends: R (>= 3.5)

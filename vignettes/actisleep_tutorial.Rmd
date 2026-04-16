@@ -1,0 +1,247 @@
+---
+title: "ActiSleep Tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ActiSleep Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ActiSleep)
+```
+
+## Introduction
+
+**ActiSleep** estimates daily sleep duration from wrist or hip accelerometer
+data.  The package implements the Pruned Dynamic Programming (PDP) algorithm
+described in [Baek et al. (2021)](https://doi.org/10.1007/s12561-021-09309-3).
+
+### Algorithm overview
+
+PDP solves the penalised segmentation problem: find the *K*-segment partition
+of an activity time series that minimises a cost function plus a penalty
+proportional to the number of breakpoints.  The pruning step discards candidate
+breakpoints that cannot be optimal for any future index, reducing worst-case
+complexity from O(*n*²*K*) to O(*nK*).
+
+Sleep estimation proceeds in four steps:
+
+1. **Threshold** — counts at or below the *p*-th percentile (`threshold_pct`)
+   are zeroed.
+2. **Segment** — the zeroed series is partitioned into *K* segments using PDP.
+3. **Merge** — consecutive low-activity segments (≥ `no_activity_cutoff`
+   zero-count epochs) are merged into candidate sleep windows.
+4. **Filter** — candidates are validated against an external sleep window
+   (diary or default 10 pm – 8 am) and a minimum duration requirement.
+
+---
+
+## Loading and Inspecting Data
+
+The package includes one subject's data in `AccelData`:
+
+```{r load-data}
+data("AccelData")
+str(AccelData)
+head(AccelData)
+```
+
+The `date` column contains minute-level timestamps and `VM` is the vector
+magnitude (activity count).
+
+---
+
+## Basic Sleep Estimation
+
+Call `estimate_sleep()` with the data frame and the name of the activity
+column.  `estimate_sleep()` automatically detects and parses common
+date-time formats.
+
+```{r basic}
+result <- estimate_sleep(AccelData, activity_col = "VM")
+result
+```
+
+Use the three S3 methods to inspect the result:
+
+```{r s3-methods}
+# Formatted per-segment summary
+print(result)
+
+# Aggregate statistics
+summary(result)
+
+# Full data frame
+df <- as.data.frame(result)
+df
+```
+
+### Understanding the output
+
+Each row in the segments data frame represents one candidate sleep episode:
+
+* `sleep_onset` / `sleep_offset` — start and end timestamps
+* `duration_min` — duration in minutes
+* `pct_zero_activity` — proportion of zero-count epochs (higher = more inactive)
+* `is_sleep` — 1 if the segment meets all criteria for sleep
+* `diary_overlap` — 1 if the segment overlaps the diary (or default) window
+
+---
+
+## Non-Wear Detection
+
+Set `detect_nonwear = TRUE` to apply the accelerometry non-wear algorithm
+before segmentation.  Days with insufficient wear time are flagged with
+`valid_accel = 0` and return `NA` segments.
+
+```{r nonwear}
+result_nw <- estimate_sleep(
+  AccelData,
+  activity_col     = "VM",
+  detect_nonwear   = TRUE,
+  min_wear_minutes = 120
+)
+print(result_nw)
+```
+
+---
+
+## Sleep Diary Integration
+
+When self-reported bed and wake times are available, pass them as a
+`data.frame` with columns `bed` and `wake`.
+
+```{r diary}
+data("SleepDiary1Day")
+
+diary <- data.frame(
+  bed  = SleepDiary1Day$bed,
+  wake = SleepDiary1Day$wake
+)
+
+result_diary <- estimate_sleep(
+  AccelData,
+  activity_col       = "VM",
+  cost_model         = "normal",
+  threshold_pct      = 0,
+  detect_nonwear     = TRUE,
+  segments_per_hour  = 2,
+  no_activity_cutoff = 0.45,
+  min_sleep_minutes  = 5,
+  use_diary          = TRUE,
+  diary              = diary
+)
+print(result_diary)
+```
+
+Diary columns may be `POSIXct` objects or character strings; `estimate_sleep()`
+parses them automatically using common formats
+(`"YYYY-MM-DD HH:MM"`, `"MM/DD/YYYY HH:MM"`, etc.).
+
+---
+
+## Batch Processing Multiple Subjects
+
+Wrap `estimate_sleep()` in `lapply()` to process a list of subjects:
+
+```{r batch, eval=FALSE}
+# subject_list: list of named lists with $accel (data.frame) and $id (string)
+results <- lapply(subject_list, function(subj) {
+  estimate_sleep(
+    data         = subj$accel,
+    subject_id   = subj$id,
+    activity_col = "VM"
+  )
+})
+
+# Combine all segments into one data frame
+all_segments <- do.call(rbind, lapply(results, as.data.frame))
+```
+
+---
+
+## Cost Model Selection
+
+ActiSleep supports five PDP cost functions:
+
+| `cost_model` | Distribution | When to use |
+|--------------|-------------|-------------|
+| `"poisson"` (default) | Poisson | Non-negative integer counts — typical for raw actigraphy |
+| `"normal"` | Normal | Continuous or approximately symmetric data |
+| `"negative_binomial"` | Negative binomial | Overdispersed integer counts |
+| `"variance"` | Variance change | Constant-mean series with changing variance |
+| `"exponential"` | Exponential | Positive continuous inter-event times |
+
+Integer codes 1–5 are also accepted.
+
+---
+
+## Parameter Tuning
+
+### `threshold_pct`
+
+Controls how aggressively low-activity epochs are zeroed before segmentation.
+
+* **Higher value** (e.g. 0.6): more epochs zeroed → sharper sleep/wake contrast
+  → recommended when many wake epochs have low-but-non-zero activity.
+* **Lower value** (e.g. 0.2): fewer epochs zeroed → use when the dataset has
+  a bimodal activity distribution or when false negatives are a concern.
+* **0**: no thresholding at all.
+
+### `segments_per_hour`
+
+Controls the temporal resolution of the segmentation.
+
+* **Higher value** (e.g. 5): finer resolution; useful for detecting short
+  naps or fragmented sleep.
+* **Lower value** (e.g. 1–2): coarser resolution; faster and more stable on
+  noisy data.
+
+### `no_activity_cutoff`
+
+Minimum proportion of zero-count epochs to label a segment as "inactive".
+
+* **Higher value** (e.g. 0.9): stricter; only segments with almost all zeros
+  are considered inactive.
+* **Lower value** (e.g. 0.5): more lenient; useful for restless sleepers.
+
+### `min_sleep_minutes`
+
+Segments shorter than this are not classified as sleep.  Raise this value if
+short spurious segments are being detected (e.g. during long inactive rest
+periods while awake).
+
+---
+
+## Reading AGD Files
+
+ActiGraph devices produce `.agd` files (SQLite databases).  Use `read_agd()`
+to extract the device settings and raw accelerometer data:
+
+```{r read-agd, eval=FALSE}
+agd <- read_agd("subject01.agd", tz = "America/New_York")
+
+head(agd$raw.data)   # date, axis1, axis2, axis3, steps, lux, ...
+agd$settings         # device metadata
+```
+
+The returned `raw.data` data frame can be passed directly to
+`estimate_sleep()` after selecting the appropriate activity column.
+
+---
+
+## References
+
+Baek, J., Banker, M., Jansen, E. C., She, X., Peterson, K. E.,
+Pitchford, E. A., & Song, P. X. K. (2021). An efficient segmentation
+algorithm to estimate sleep duration from actigraphy data.
+*Statistics in Biosciences*.
+<https://doi.org/10.1007/s12561-021-09309-3>

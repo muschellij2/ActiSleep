@@ -4,3 +4,6 @@
 ^\.github$
 ^\.git$
 ^\.gitignore$
+^\.DS_Store$
+^.*\.Rcheck$
+^.*\.tar\.gz$

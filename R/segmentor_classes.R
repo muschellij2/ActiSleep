@@ -22,11 +22,11 @@ setMethod("show", "Segmentor",
 		str(object@parameters)
 		cat("\n Likelihood of the segmentation \n")
 		print(object@likelihood)
-		if(object@model=="Variance")
+		if(object@model=="Variance Segmentation")
 		{
 			cat("\n Mean used: \n")
 			print(object@mean)
-		} else if (object@model=="Negative Binomial")
+		} else if (object@model=="Negative binomial")
 		{
 			cat("\n Overdispersion used: \n")
 			print(object@overdispersion)

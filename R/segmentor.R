@@ -7,16 +7,6 @@
 #' @noRd
 #'
 Segmentor <- function(data = numeric(),
-                     model = 1,
-                     Kmax = 15,
-                     phi = numeric(),
-                     m = numeric(),
-                     keep = FALSE,
-                     bounds = c(0,0),
-                     compress = TRUE) UseMethod("Segmentor")
-
-#' @noRd
-Segmentor.default <- function(data = numeric(),
                              model = 1,
                              Kmax = 15,
                              phi = numeric(),
@@ -72,31 +62,34 @@ Segmentor.default <- function(data = numeric(),
 			phi = median(K[!is.na(K)])
 		}
   }
-  if(!keep)
-  {
-		if (model==1)
-			Rep<-.C("SegmentPoisson", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.integer(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), PACKAGE="ActiSleep") else if (model==5)
-			Rep<-.C("SegmentExponential", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), PACKAGE="ActiSleep") else if (model==3)
-			Rep<-.C("SegmentBinNeg", Size = as.integer(n2),KMax = as.integer(Kmax), theta = as.double(phi), Data = as.integer(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood),  PACKAGE="ActiSleep") else if (model==2)
-			Rep<-.C("SegmentNormal", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood),  PACKAGE="ActiSleep") else if (model==4)
-			Rep<-.C("SegmentVariance", Size = as.integer(n2),KMax = as.integer(Kmax), mu = as.double(m), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood),  PACKAGE="ActiSleep")
-	} else
-	{
-		  cost=matrix(0,nrow=Kmax,ncol=n2)
-  		cost=as.vector(cost)
-  		pos=matrix(0,nrow=Kmax,ncol=n2)
-  		pos=as.vector(pos)
-		if (model==1)
-			Rep<-.C("SegmentPoissonKeep", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.integer(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), Cost = as.double(cost), Pos = as.integer(pos), PACKAGE="ActiSleep") else if (model==5)
-			Rep<-.C("SegmentExponentialKeep", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), Cost = as.double(cost), Pos = as.integer(pos), PACKAGE="ActiSleep") else if (model==3)
-			Rep<-.C("SegmentBinNegKeep", Size = as.integer(n2),KMax = as.integer(Kmax), theta = as.double(phi), Data = as.integer(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), Cost = as.double(cost), Pos = as.integer(pos), PACKAGE="ActiSleep") else if (model==2)
-			Rep<-.C("SegmentNormalKeep", Size = as.integer(n2),KMax = as.integer(Kmax), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), Cost = as.double(cost), Pos = as.integer(pos), PACKAGE="ActiSleep") else if (model==4)
-			Rep<-.C("SegmentVarianceKeep", Size = as.integer(n2),KMax = as.integer(Kmax), mu = as.double(m), Data = as.double(dat), SegBounds=as.double(bounds), DataComp = as.integer(datasize), Breakpoints = as.integer(breaks), Parameters = as.double(parameters), Likelihood = as.double(likelihood), Cost = as.double(cost), Pos = as.integer(pos), PACKAGE="ActiSleep")
-			cost = matrix(Rep$Cost,ncol=Kmax)
- 		  cost = t(cost)
-    	pos = matrix(Rep$Pos,ncol=Kmax)
-  		pos = t(pos)
-	}
+  # Dispatch to Rcpp-exported functions (generated from rcpp_segmentor.cpp)
+  if (!keep) {
+    if (model == 1)
+      Rep <- rcpp_segment_poisson(n2, Kmax, as.integer(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 5)
+      Rep <- rcpp_segment_exponential(n2, Kmax, as.double(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 3)
+      Rep <- rcpp_segment_binneg(n2, Kmax, as.double(phi), as.integer(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 2)
+      Rep <- rcpp_segment_normal(n2, Kmax, as.double(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 4)
+      Rep <- rcpp_segment_variance(n2, Kmax, as.double(m), as.double(dat), as.double(bounds), as.integer(datasize))
+  } else {
+    if (model == 1)
+      Rep <- rcpp_segment_poisson_keep(n2, Kmax, as.integer(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 5)
+      Rep <- rcpp_segment_exponential_keep(n2, Kmax, as.double(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 3)
+      Rep <- rcpp_segment_binneg_keep(n2, Kmax, as.double(phi), as.integer(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 2)
+      Rep <- rcpp_segment_normal_keep(n2, Kmax, as.double(dat), as.double(bounds), as.integer(datasize))
+    else if (model == 4)
+      Rep <- rcpp_segment_variance_keep(n2, Kmax, as.double(m), as.double(dat), as.double(bounds), as.integer(datasize))
+    cost <- matrix(Rep$Cost, ncol = Kmax)
+    cost <- t(cost)
+    pos  <- matrix(Rep$Pos,  ncol = Kmax)
+    pos  <- t(pos)
+  }
   breaks=matrix(Rep$Breakpoints,ncol=Kmax)
   breaks = t(breaks)
   for (k in 1:length(breaks[,1]))
@@ -199,7 +192,7 @@ Segmentor.default <- function(data = numeric(),
 
 BestSegmentation <- function(x, K, t = numeric(), compress = TRUE)
 {
-	if (!is("Segmentor", class(x)))
+	if (!is(x, "Segmentor"))
 		stop("x must be an object of class Segmentor returned by the Segmentor function")
 	if (dim(getCost(x))[1]==0)
 		stop('to use this function the data must have been processed with option keep=TRUE')
@@ -276,7 +269,7 @@ SelectModel <-function(x, penalty = "oracle", seuil = n/log(n), keep = FALSE, gr
 {
 	if ((penalty!='BIC') & (penalty!='mBIC') & (penalty!='AIC') & (penalty!='oracle'))
 		stop("penalty must be BIC, mBIC, AIC or oracle")
-	if (!is("Segmentor", class(x)))
+	if (!is(x, "Segmentor"))
 		stop("x must be an object of class Segmentor returned by the Segmentor function")
 	n<-getBreaks(x)[1,1]
 	Kmax<-getKmax(x)
@@ -312,9 +305,9 @@ SelectModel <-function(x, penalty = "oracle", seuil = n/log(n), keep = FALSE, gr
 		if(penalty=='mBIC')
 			K<-which.min(crit<-getLikelihood(x)+0.5*sapply(1:Kmax,sizenr)+(1:Kmax-0.5)*log(n))
 		if (penalty=='BIC')
-			K<-which.min(crit<-getLikelihood(x)+1:K*log(n))
+			K<-which.min(crit<-getLikelihood(x)+1:Kmax*log(n))
 		if (penalty=='AIC')
-			K<-which.min(crit<-getLikelihood(x)+1:K*2)
+			K<-which.min(crit<-getLikelihood(x)+1:Kmax*2)
 		if (penalty=='oracle')
 		{
 			Kseq=1:Kmax
@@ -408,9 +401,9 @@ SelectModel <-function(x, penalty = "oracle", seuil = n/log(n), keep = FALSE, gr
 		if(penalty=='mBIC')
 			stop("no mBIC for Variance model")
 		if (penalty=='BIC')
-			K<-which.min(getLikelihood(x)+((1:K)+1)*log(n))
+			K<-which.min(getLikelihood(x)+((1:Kmax)+1)*log(n))
 		if (penalty=='AIC')
-			K<-which.min(getLikelihood(x)+((1:K)+1)*2)
+			K<-which.min(getLikelihood(x)+((1:Kmax)+1)*2)
 		if(penalty=='oracle')
 			stop("no oracle penalty for Variance model")
 	}
@@ -459,4 +452,14 @@ print.Segmentor <- function(x,...)
     print(getParameters(x))
   }
 }
+
+# snake_case alias used internally by estimate_sleep()
+#' @keywords internal
+segmentor <- Segmentor
+
+# snake_case aliases for model-selection helpers
+#' @keywords internal
+best_segmentation <- BestSegmentation
+#' @keywords internal
+select_model <- SelectModel
 

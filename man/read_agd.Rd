@@ -2,20 +2,26 @@
 % Please edit documentation in R/read_agd.R
 \name{read_agd}
 \alias{read_agd}
-\title{Read in AGD filedata}
+\title{Read AGD file data}
 \usage{
 read_agd(file, tz = "GMT", sec = 10)
 }
 \arguments{
-\item{file}{AGD data file}
+\item{file}{Path to an AGD data file.}
 
-\item{tz}{timezone, default is GMT}
+\item{tz}{Timezone string, default \code{"GMT"}.}
 
-\item{sec}{time interval used to set date}
+\item{sec}{Epoch length in seconds used to construct timestamps, default 10.}
 }
 \value{
-list of AGD filenames and data
+A list with two elements:
+  \describe{
+    \item{settings}{Data frame of device settings metadata.}
+    \item{raw.data}{Data frame with columns \code{date} and all
+      accelerometer channels (axis1, axis2, axis3, steps, lux, etc.).}
+  }
 }
 \description{
-Obtain a list of AGD filenames and data
+Read an ActiGraph .agd file (SQLite format) and return
+  device settings and raw accelerometer data.
 }

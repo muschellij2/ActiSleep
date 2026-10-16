@@ -112,6 +112,18 @@ test_that("local wear classifier handles boundary scenarios", {
     ActiSleep:::classify_wear_time(rep(0, 4), 4L),
     rep(0L, 4)
   )
+  # A qualifying rolling window marks its entire zero block, including the
+  # first and last 59 epochs around a 60-epoch window.
+  edge_block <- c(7L, rep(0L, 120L), 9L)
+  expect_identical(
+    ActiSleep:::classify_wear_time(edge_block, 60L),
+    c(1L, rep(0L, 120L), 1L)
+  )
+  # A zero block shorter than the window has no qualifying window.
+  expect_identical(
+    ActiSleep:::classify_wear_time(c(7L, rep(0L, 59L), 9L), 60L),
+    rep(1L, 61L)
+  )
 })
 
 

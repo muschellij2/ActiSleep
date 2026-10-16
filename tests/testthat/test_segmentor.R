@@ -54,6 +54,31 @@ test_that("Segmentor() works with Exponential (model 5)", {
   expect_s4_class(seg, "Segmentor")
 })
 
+# Exercise every Rcpp keep=TRUE entry point and the formatted parameter table.
+test_that("all kept Segmentor models retain costs and print parameters", {
+  set.seed(17)
+  model_inputs <- list(
+    list(model = 1L, data = as.integer(rpois(100, lambda = 20))),
+    list(model = 2L, data = rnorm(100, mean = 10, sd = 2)),
+    list(model = 3L, data = as.integer(rpois(100, lambda = 20))),
+    list(model = 4L, data = c(rnorm(50, sd = 1), rnorm(50, sd = 5))),
+    list(model = 5L, data = rexp(100, rate = 0.2))
+  )
+
+  for (input in model_inputs) {
+    seg <- ActiSleep:::Segmentor(input$data, model = input$model,
+                                 Kmax = 4L, compress = FALSE, keep = TRUE)
+    expect_s4_class(seg, "Segmentor")
+    expect_true(length(ActiSleep:::getCost(seg)) > 0L)
+    expect_true(length(ActiSleep:::getParameters(seg)) > 0L)
+    # Segmentor stores its parameters as an S4 slot, not a list element.
+    expect_true("parameters" %in% slotNames(seg))
+
+    printed <- capture.output(print(seg))
+    expect_true(any(grepl("Table of parameters", printed)))
+  }
+})
+
 
 # ---- Accessor methods --------------------------------------------------------
 

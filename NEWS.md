@@ -19,10 +19,13 @@
   compressed data length is now set before combining forward and reverse
   costs.
 * Registered the existing `Segmentor` print method for S3 dispatch.
+* Fixed `Segmentor` printing to detect S4 slots, so model parameters,
+  overdispersion, and mean values are displayed when present.
 * Added regression tests for full wear masks across window lengths and
   boundary cases, as well as tests for sleep
   interval helpers, segment classification, and segmentor validation and
-  model selection.
+  model selection. Added rolling-window edge tests and exercised all five
+  saved-cost Rcpp model paths, including parameter printing.
 
 This release is a comprehensive overhaul introducing a modernised C++ interface,
 a cleaner two-function API, snake_case naming throughout, an S3 result class,

@@ -428,17 +428,19 @@ print.Segmentor <- function(x,...)
   cat("\n Table of negative log-likelihood for each optimal segmentation: \n")
   print(getLikelihood(x))
 
-  if (is.element("overdispersion",names(x)))
+  # Segmentor is an S4 object, so inspect its slots rather than list names.
+  object_slots <- slotNames(x)
+  if ("overdispersion" %in% object_slots)
   {
     cat("\n Value of the overdispersion used for the segmentation: \n")
     print(getOverdispersion(x))
   }
-  if (is.element("mean",names(x)))
+  if ("mean" %in% object_slots)
   {
     cat("\n Value of the mean used for the segmentation: \n")
     print(getMean(x))
   }
-  if (is.element("parameters",names(x)))
+  if ("parameters" %in% object_slots)
   {
     cat("\n Table of parameters: ")
     if (getModel(x)=="Poisson")

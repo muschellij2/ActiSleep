@@ -71,6 +71,63 @@ test_that("non-wear result matches baseline fixture", {
   expect_equal(result$parameters$valid_accel, base$parameters$valid_accel)
 })
 
+# Confirm every requested window is passed through to accelerometry::weartime.
+test_that("non-wear window matches weartime() across parameter values", {
+  data("AccelData", package = "ActiSleep")
+  windows <- c(60L, 120L, 180L)
+
+  for (window in windows) {
+    # This direct call is the reference behavior for the configured window.
+    expected_wear <- sum(accelerometry::weartime(
+      counts = AccelData$VM,
+      window = window,
+      tol = 0L,
+      tol_upper = 99L,
+      nci = FALSE,
+      days_distinct = FALSE,
+      units_day = 1440L
+    ))
+    expected_valid <- as.integer(expected_wear == nrow(AccelData))
+
+    result <- estimate_sleep(
+      AccelData,
+      activity_col = "VM",
+      detect_nonwear = TRUE,
+      min_wear_minutes = window
+    )
+
+    expect_equal(result$parameters$valid_accel, expected_valid)
+  }
+})
+
+# Compare full epoch masks against weartime(), including short runs, isolated
+# spikes, non-integer counts, empty input, and windows longer than the series.
+test_that("local wear classifier matches weartime() on boundary scenarios", {
+  scenarios <- list(
+    empty = numeric(),
+    short_zero_run = c(0, 0, 12, 0),
+    long_zero_run = c(4, rep(0, 130), 101, rep(0, 70), 8),
+    fractional_counts = c(0, 0.5, 0, 0, 100, 0, 0, 0)
+  )
+  windows <- c(2L, 2.9, 5L, 60L, 120L, 180L)
+
+  for (counts in scenarios) {
+    for (window in windows) {
+      expected <- accelerometry::weartime(
+        counts = counts,
+        window = window,
+        tol = 0L,
+        tol_upper = 99L,
+        nci = FALSE,
+        days_distinct = FALSE,
+        units_day = 1440L
+      )
+      actual <- ActiSleep:::classify_wear_time(counts, window)
+      expect_identical(actual, as.integer(expected))
+    }
+  }
+})
+
 
 # ---- diary -------------------------------------------------------------------
 
@@ -143,4 +200,61 @@ test_that("cost_model string 'poisson' matches integer 1", {
   r_int <- estimate_sleep(AccelData, activity_col = "VM", cost_model = 1L)
   expect_equal(as.data.frame(r_str)$duration_min,
                as.data.frame(r_int)$duration_min)
+})
+
+
+# Cover the small helpers directly so their accepted date and interval forms
+# remain stable independently of the full estimation pipeline.
+test_that("time and segment helpers handle their documented inputs", {
+  timestamps <- c("2020-01-01 00:00:00", "2020-01-01 00:01:00")
+  formatted <- ActiSleep:::format_time(
+    data.frame(date = timestamps), col_idx = 1L
+  )
+  expect_s3_class(formatted$date, "POSIXct")
+  expect_equal(ActiSleep:::calculate_segment_mean(1L, c(0, 2, 4), 1L, 3L), 2)
+
+  # Both parsed POSIXct dates and supported character dates make sleep windows.
+  dates <- as.POSIXct(c("2020-01-01 12:00:00", "2020-01-02 12:00:00"),
+                      tz = "GMT")
+  interval_posix <- ActiSleep:::get_sleep_interval(data.frame(date = dates))
+  interval_text <- ActiSleep:::get_sleep_interval(
+    data.frame(date = format(dates, "%Y-%m-%d %H:%M:%S", tz = "GMT"))
+  )
+  expect_equal(nrow(interval_posix), 1L)
+  expect_equal(interval_posix, interval_text)
+  expect_error(
+    ActiSleep:::get_sleep_interval(data.frame(date = c("invalid", "invalid")))
+  )
+
+  diary_wide <- data.frame(
+    bed1 = "2020-01-01 22:00:00",
+    wake1 = "2020-01-02 07:00:00"
+  )
+  diary <- ActiSleep:::get_diary_subject(diary_wide, 1L, 1L, 2L)
+  expect_named(diary, c("bed", "wake"))
+  expect_equal(nrow(diary), 1L)
+})
+
+test_that("sleep-segment classification merges low-activity intervals", {
+  dates <- as.POSIXct("2020-01-01 22:00:00", tz = "GMT") +
+    seq(0, 50, by = 10) * 60
+  interval <- data.frame(
+    bed = as.POSIXct("2020-01-01 22:00:00", tz = "GMT"),
+    wake = as.POSIXct("2020-01-01 23:00:00", tz = "GMT")
+  )
+  classified <- ActiSleep:::search_sleep_segments(
+    date = dates,
+    Y = c(0, 0, 4, 4, 0, 0),
+    idx_start = c(1L, 3L, 5L),
+    idx_end = c(2L, 4L, 6L),
+    no_activity_cutoff = 0.5,
+    min_sleep_minutes = 5,
+    sleep_interval = interval
+  )
+
+  # The adjacent zero-activity epochs merge and overlap the supplied window.
+  expect_equal(nrow(classified$dat_long), 3L)
+  expect_equal(nrow(classified$dat_short), 3L)
+  expect_equal(classified$dat_short$is_sleep, c(1, 0, 1))
+  expect_true(all(classified$dat_short$diary_overlap == 1L))
 })

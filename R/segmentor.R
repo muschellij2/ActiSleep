@@ -227,6 +227,8 @@ BestSegmentation <- function(x, K, t = numeric(), compress = TRUE)
 	{
 		warning('Warning: K is greater than Kmax, will apply new Segmentor with Kmax=K')
 		resForward <- Segmentor(data, model=mod, Kmax=K, phi=getOverdispersion(x), m=getMean(x), keep=TRUE, compress = compress)
+		# The cost and position matrices use compressed length when requested.
+		n2 <- if (compress) length(rle(data)$values) else n
 	}
 	resBack <- Segmentor(rev(data), model=mod, Kmax=K, phi=getOverdispersion(x), m=getMean(x), keep=TRUE, compress = compress)
 	bestCost <- t(matrix( getCost(resForward)[1:(K-1), 1:(n2-1)] + getCost(resBack)[(K-1):1, (n2-1):1], nrow=K-1))
@@ -414,7 +416,7 @@ SelectModel <-function(x, penalty = "oracle", seuil = n/log(n), keep = FALSE, gr
 }
 
 
-#' @noRd
+#' @exportS3Method base::print
 print.Segmentor <- function(x,...)
 {
   cat("\n Model used for the segmentation: \n")

@@ -1,7 +1,6 @@
 #' @import lubridate
 #' @importFrom DBI dbConnect dbDisconnect dbReadTable
 #' @importFrom RSQLite SQLite
-#' @importFrom accelerometry weartime
 #' @importFrom stats quantile sd aggregate median
 #' @importFrom utils str head
 #' @importFrom methods show new is

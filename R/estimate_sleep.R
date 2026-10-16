@@ -101,6 +101,30 @@ calculate_segment_mean <- function(i, datain, idx_start, idx_end)
 cal_mean_idx <- calculate_segment_mean
 
 
+# ---- classify_wear_time (internal) ------------------------------------------
+
+#' Classify wear epochs using the default accelerometry::weartime() settings
+#'
+#' With tol = 0, a non-wear interval must contain only zero counts. Therefore
+#' each run of zero counts at least window epochs long is a non-wear run.
+#' Integer coercion matches weartime(), which accepts integer counts.
+#'
+#' @param counts Numeric activity-count vector.
+#' @param window Minimum zero-run length, in epochs.
+#' @return Integer vector with 1 for wear and 0 for non-wear.
+#' @keywords internal
+classify_wear_time <- function(counts, window) {
+  counts <- as.integer(counts)
+  window <- as.integer(window)
+  runs <- rle(counts)
+  is_nonwear <- !is.na(runs$values) &
+    runs$values == 0L &
+    runs$lengths >= window
+
+  rep.int(as.integer(!is_nonwear), runs$lengths)
+}
+
+
 # ---- get_sleep_interval (internal) ------------------------------------------
 
 #' Generate default bed/wake intervals from accelerometer dates
@@ -345,12 +369,15 @@ SearchSleepSeg <- search_sleep_segments
 #'   qualify as wake.  Default \code{180}.
 #' @param min_nap_minutes Sleep segments shorter than this (minutes) that do
 #'   not overlap the diary window are excluded as naps.  Default \code{20}.
-#' @param detect_nonwear Logical; if \code{TRUE} the
-#'   \code{\link[accelerometry]{weartime}} algorithm is applied before
-#'   segmentation.  Days with non-wear periods are flagged with
-#'   \code{valid_accel = 0}.  Default \code{FALSE}.
-#' @param min_wear_minutes Minimum number of wear minutes required when
-#'   \code{detect_nonwear = TRUE}.  Default \code{120}.
+#' @param detect_nonwear Logical; if \code{TRUE}, epochs are classified using
+#'   the default zero-run rule from \code{\link[accelerometry]{weartime}}
+#'   before segmentation. Recordings containing any non-wear epochs are
+#'   flagged with \code{valid_accel = 0}. Default \code{FALSE}.
+#' @param min_wear_minutes Window length, in one-minute epochs, passed as the
+#'   \code{window} argument to \code{accelerometry::weartime()} when
+#'   \code{detect_nonwear = TRUE}. This controls the wear-time algorithm's
+#'   classification window; it is not a minimum total-wear threshold.
+#'   Default \code{120}.
 #' @param use_diary Logical; if \code{TRUE} diary-based bed/wake times are
 #'   used to validate sleep segments.  \code{diary} must be supplied.
 #'   Default \code{FALSE}.
@@ -582,7 +609,10 @@ estimate_sleep <- function(
   valid_accel <- 1L
   if (detect_nonwear) {
     n_min   <- nrow(data)
-    n_wear  <- sum(weartime(data[, activity_col], window = min_wear_minutes))
+    # Match weartime() defaults without requiring it at runtime: with tol = 0,
+    # only zero runs as long as the configured window are marked non-wear.
+    wear_flags <- classify_wear_time(data[, activity_col], min_wear_minutes)
+    n_wear <- sum(wear_flags)
     if (n_min != n_wear)
       valid_accel <- 0L
   }

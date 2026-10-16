@@ -98,9 +98,10 @@ Each row in the segments data frame represents one candidate sleep episode:
 
 ## Non-Wear Detection
 
-Set `detect_nonwear = TRUE` to apply the accelerometry non-wear algorithm
-before segmentation.  Days with insufficient wear time are flagged with
-`valid_accel = 0` and return `NA` segments.
+Set `detect_nonwear = TRUE` to flag runs of zero-count epochs at least as long
+as `min_wear_minutes` before segmentation. This matches the default
+`accelerometry::weartime()` rule. A recording containing any such non-wear
+epochs is flagged with `valid_accel = 0` and returns `NA` segments.
 
 ```{r nonwear}
 result_nw <- estimate_sleep(

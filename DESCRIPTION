@@ -27,7 +27,7 @@ BugReports: https://github.com/n-szeto/ActiSleep/issues
 Imports: lubridate, DBI, RSQLite, methods, utils, stats, Rcpp
 LinkingTo: Rcpp
 Depends: R (>= 3.5)
-Suggests: accelerometry, testthat (>= 3.0.0), knitr, rmarkdown
+Suggests: testthat (>= 3.0.0), knitr, rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 NeedsCompilation: yes

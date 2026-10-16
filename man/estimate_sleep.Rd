@@ -64,13 +64,13 @@ qualify as wake.  Default \code{180}.}
 not overlap the diary window are excluded as naps.  Default \code{20}.}
 
 \item{detect_nonwear}{Logical; if \code{TRUE}, epochs are classified using
-the default zero-run rule from \code{\link[accelerometry]{weartime}}
+a zero-run rule equivalent to the default moving-window settings
 before segmentation. Recordings containing any non-wear epochs are
 flagged with \code{valid_accel = 0}. Default \code{FALSE}.}
 
-\item{min_wear_minutes}{Window length, in one-minute epochs, passed as the
-\code{window} argument to \code{accelerometry::weartime()} when
-\code{detect_nonwear = TRUE}. This controls the wear-time algorithm's
+\item{min_wear_minutes}{Window length, in one-minute epochs, used by the
+wear-time classifier when \code{detect_nonwear = TRUE}. This controls the
+wear-time algorithm's
 classification window; it is not a minimum total-wear threshold.
 Default \code{120}.}
 

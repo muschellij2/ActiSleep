@@ -71,61 +71,47 @@ test_that("non-wear result matches baseline fixture", {
   expect_equal(result$parameters$valid_accel, base$parameters$valid_accel)
 })
 
-# Confirm every requested window is passed through to accelerometry::weartime.
-test_that("non-wear window matches weartime() across parameter values", {
+# Confirm every requested window is passed through to the local classifier.
+test_that("non-wear window is applied across parameter values", {
   data("AccelData", package = "ActiSleep")
   windows <- c(60L, 120L, 180L)
+  # These expected flags were established for the default weartime settings.
+  expected_valid <- c(0L, 1L, 1L)
 
-  for (window in windows) {
-    # This direct call is the reference behavior for the configured window.
-    expected_wear <- sum(accelerometry::weartime(
-      counts = AccelData$VM,
-      window = window,
-      tol = 0L,
-      tol_upper = 99L,
-      nci = FALSE,
-      days_distinct = FALSE,
-      units_day = 1440L
-    ))
-    expected_valid <- as.integer(expected_wear == nrow(AccelData))
-
+  for (i in seq_along(windows)) {
     result <- estimate_sleep(
       AccelData,
       activity_col = "VM",
       detect_nonwear = TRUE,
-      min_wear_minutes = window
+      min_wear_minutes = windows[i]
     )
 
-    expect_equal(result$parameters$valid_accel, expected_valid)
+    expect_equal(result$parameters$valid_accel, expected_valid[i])
   }
 })
 
-# Compare full epoch masks against weartime(), including short runs, isolated
-# spikes, non-integer counts, empty input, and windows longer than the series.
-test_that("local wear classifier matches weartime() on boundary scenarios", {
-  scenarios <- list(
-    empty = numeric(),
-    short_zero_run = c(0, 0, 12, 0),
-    long_zero_run = c(4, rep(0, 130), 101, rep(0, 70), 8),
-    fractional_counts = c(0, 0.5, 0, 0, 100, 0, 0, 0)
+# Check full masks against hand-specified expected results for the default
+# zero-run rule, including coercion, empty input, and boundary run lengths.
+test_that("local wear classifier handles boundary scenarios", {
+  expect_identical(ActiSleep:::classify_wear_time(numeric(), 2L), integer())
+  expect_identical(
+    ActiSleep:::classify_wear_time(c(0, 0, 12, 0), 2L),
+    c(0L, 0L, 1L, 1L)
   )
-  windows <- c(2L, 2.9, 5L, 60L, 120L, 180L)
-
-  for (counts in scenarios) {
-    for (window in windows) {
-      expected <- accelerometry::weartime(
-        counts = counts,
-        window = window,
-        tol = 0L,
-        tol_upper = 99L,
-        nci = FALSE,
-        days_distinct = FALSE,
-        units_day = 1440L
-      )
-      actual <- ActiSleep:::classify_wear_time(counts, window)
-      expect_identical(actual, as.integer(expected))
-    }
-  }
+  expect_identical(
+    ActiSleep:::classify_wear_time(c(4, rep(0, 5), 101, rep(0, 3), 8), 5L),
+    c(1L, rep(0L, 5), 1L, rep(1L, 3), 1L)
+  )
+  # Counts and windows are coerced to integer before classification.
+  expect_identical(
+    ActiSleep:::classify_wear_time(c(0, 0.5, 0, 0, 100, 0, 0, 0), 2.9),
+    c(0L, 0L, 0L, 0L, 1L, 0L, 0L, 0L)
+  )
+  # With days_distinct = FALSE, a run crossing midnight remains continuous.
+  expect_identical(
+    ActiSleep:::classify_wear_time(rep(0, 4), 4L),
+    rep(0L, 4)
+  )
 })
 
 

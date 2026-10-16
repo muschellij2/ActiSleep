@@ -6,11 +6,12 @@
 * Added a generated SQLite fixture test for `read_agd()` so file parsing,
   timestamp construction, and output columns are tested without committing a
   device-specific AGD file.
-* Removed `accelerometry` from runtime imports. With the existing `weartime()`
+* Removed the unavailable `accelerometry` dependency. With the existing
+  `weartime()`
   settings (`tol = 0`, `tol_upper = 99`, `nci = FALSE`,
   `days_distinct = FALSE`), only full runs of zero-count epochs can be
   non-wear, so a base R run-length classifier now produces the same epoch
-  mask. `accelerometry` remains a suggested package for reference tests.
+  mask. Self-contained tests check the classifier's boundary behavior.
 * Corrected the `min_wear_minutes` documentation: this value sets the
   classifier's minimum zero-run window; it is not a minimum total-wear
   duration.
@@ -18,8 +19,8 @@
   compressed data length is now set before combining forward and reverse
   costs.
 * Registered the existing `Segmentor` print method for S3 dispatch.
-* Added regression tests comparing full wear masks against `weartime()` for
-  several window lengths and boundary cases, as well as tests for sleep
+* Added regression tests for full wear masks across window lengths and
+  boundary cases, as well as tests for sleep
   interval helpers, segment classification, and segmentor validation and
   model selection.
 

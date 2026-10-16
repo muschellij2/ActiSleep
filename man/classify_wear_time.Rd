@@ -2,7 +2,7 @@
 % Please edit documentation in R/estimate_sleep.R
 \name{classify_wear_time}
 \alias{classify_wear_time}
-\title{Classify wear epochs using the default accelerometry::weartime() settings}
+\title{Classify wear epochs using the default weartime settings}
 \usage{
 classify_wear_time(counts, window)
 }
@@ -17,6 +17,7 @@ Integer vector with 1 for wear and 0 for non-wear.
 \description{
 With tol = 0, a non-wear interval must contain only zero counts. Therefore
 each run of zero counts at least window epochs long is a non-wear run.
-Integer coercion matches weartime(), which accepts integer counts.
+Integer coercion matches the integer count handling of the reference
+implementation.
 }
 \keyword{internal}

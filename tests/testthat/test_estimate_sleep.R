@@ -200,6 +200,36 @@ test_that("cost_model string 'poisson' matches integer 1", {
                as.data.frame(r_int)$duration_min)
 })
 
+# Reuse the package's accelerometer fixture to cover each public cost-model
+# branch and the retained legacy wrapper without relying on external data.
+test_that("estimate_sleep and legacy wrapper run all five cost models", {
+  data("AccelData", package = "ActiSleep")
+  expected_models <- c(
+    "poisson", "normal", "negative_binomial", "variance", "exponential"
+  )
+
+  for (model in seq_along(expected_models)) {
+    current <- estimate_sleep(
+      AccelData,
+      cost_model = model,
+      activity_col = "VM",
+      segments_per_hour = 0.5
+    )
+    expect_identical(current$parameters$cost_model, expected_models[model])
+    expect_gt(nrow(current$segments), 0L)
+
+    legacy <- ActiSleep:::SleepEstEachDay(
+      AccelData,
+      f = model,
+      Y_name = "VM",
+      S = 0.5
+    )
+    expect_true(is.data.frame(legacy$summary))
+    expect_true(all(c("id", "valid_accel", "Sleep") %in%
+                      names(legacy$summary)))
+  }
+})
+
 
 # Cover the small helpers directly so their accepted date and interval forms
 # remain stable independently of the full estimation pipeline.

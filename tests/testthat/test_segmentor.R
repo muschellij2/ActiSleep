@@ -184,8 +184,11 @@ test_that("Segmentor() validates its model and input", {
 test_that("Segmentor objects use their registered print method", {
   seg <- ActiSleep:::Segmentor(as.integer(1:30), model = 1L, Kmax = 3L,
                                compress = FALSE)
-  output <- capture.output(print(seg))
+  output <- capture.output(result <- withVisible(print(seg)))
   expect_true(any(grepl("Model used for the segmentation", output)))
+  # Base print methods return their input invisibly for assignment and chaining.
+  expect_identical(result$value, seg)
+  expect_false(result$visible)
 })
 
 test_that("SelectModel() supports model-specific penalties and criteria", {

@@ -455,6 +455,8 @@ print.Segmentor <- function(x,...)
       cat("(Variance of the signal in each segment) \n")
     print(getParameters(x))
   }
+
+  invisible(x)
 }
 
 # snake_case alias used internally by estimate_sleep()
